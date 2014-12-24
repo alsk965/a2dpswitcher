@@ -24,7 +24,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.SparseArray;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -34,7 +33,6 @@ public class BluetoothSwitcherService extends Service {
     public static final String PREF_NOTIFY = "show_notification";
 
     public static final String ACTION_DISCONNECT = "disconnect";
-    public static final String EXTRA_DEVICE = "device";
 
     public static final boolean PREF_NOTIFY_DEFAULT = true;
 
@@ -46,15 +44,15 @@ public class BluetoothSwitcherService extends Service {
     };
 
     private final DeviceManagementBinder mBinder = new DeviceManagementBinder(this);
-    private final SparseArray<String> mCustomDeviceNames = new SparseArray<String>();
-    private final TreeSet<Integer> mHiddenDevices = new TreeSet<Integer>();
-    private final LinkedList<Runnable> mPendingActions = new LinkedList<Runnable>();
+    private final SparseArray<String> mCustomDeviceNames = new SparseArray<>();
+    private final TreeSet<Integer> mHiddenDevices = new TreeSet<>();
 
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothA2dpCompat mAudioProxy;
 
     private boolean mShowNotification;
     private boolean mIsConnectingToProxy;
+    private boolean mPendingDisconnect;
 
     @Override
     public void onCreate() {
@@ -76,28 +74,28 @@ public class BluetoothSwitcherService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (ACTION_DISCONNECT.equals(intent.getAction())) {
-            final BluetoothDevice device = intent.getParcelableExtra(EXTRA_DEVICE);
-            disconnectDevice(device);
+            tryDisconnect();
         }
 
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void disconnectDevice(final BluetoothDevice device) {
+    private void tryDisconnect() {
         if (mAudioProxy != null) {
-            mAudioProxy.disconnect(device);
+            disconnectImmediate();
         } else {
-            mPendingActions.add(new Runnable() {
-                @Override
-                public void run() {
-                    mAudioProxy.disconnect(device);
-                }
-            });
+            mPendingDisconnect = true;
 
             connectAudioProxy();
         }
     }
 
+    private void disconnectImmediate() {
+        final BluetoothDevice device = getConnectedDevice();
+        if (device != null) {
+            mAudioProxy.disconnect(device);
+        }
+    }
 
     private boolean connectAudioProxy() {
         if (mAudioProxy != null) {
@@ -181,7 +179,6 @@ public class BluetoothSwitcherService extends Service {
                 final CharSequence disconnectLabel = getString(R.string.disconnect);
                 final Intent disconnectIntent = new Intent(this, BluetoothSwitcherService.class);
                 disconnectIntent.setAction(ACTION_DISCONNECT);
-                disconnectIntent.putExtra(EXTRA_DEVICE, device);
 
                 final PendingIntent disconnectPendingIntent =
                         PendingIntent.getService(this, 0, disconnectIntent, 0);
@@ -198,9 +195,12 @@ public class BluetoothSwitcherService extends Service {
     }
 
     private BluetoothDevice getConnectedDevice() {
+        if (mAudioProxy == null) {
+            return null;
+        }
+
         final List<BluetoothDevice> devices = mAudioProxy
                 .getDevicesMatchingConnectionStates(STATES_CONNECTED);
-
         if ((devices == null) || devices.isEmpty()) {
             // No audio devices are connected.
             return null;
@@ -301,10 +301,10 @@ public class BluetoothSwitcherService extends Service {
             updateNotification();
 
             // Run any pending actions.
-            for (Runnable action : mPendingActions) {
-                action.run();
+            if (mPendingDisconnect) {
+                mPendingDisconnect = false;
+                disconnectImmediate();
             }
-            mPendingActions.clear();
 
             mBinder.fireAudioProxyAvailable();
         }
@@ -312,7 +312,7 @@ public class BluetoothSwitcherService extends Service {
 
     public static class DeviceManagementBinder extends Binder {
         private final RemoteCallbackList<DeviceDataCallback> mListeners =
-                new RemoteCallbackList<DeviceDataCallback>();
+                new RemoteCallbackList<>();
 
         private final BluetoothSwitcherService mService;
 
