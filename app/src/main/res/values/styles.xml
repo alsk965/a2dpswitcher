@@ -1,0 +1,10 @@
+<resources>
+
+    <style name="Theme.Light" parent="@style/Theme.AppCompat.Light">
+        <item name="colorAccent">@android:color/holo_blue_dark</item>
+    </style>
+    <style name="Theme.Dark" parent="@style/Theme.AppCompat">
+        <item name="colorAccent">@android:color/holo_blue_light</item>
+    </style>
+
+</resources>

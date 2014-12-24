@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="dialogPadding">24dp</dimen>
+    <dimen name="buttonBarPadding">12dp</dimen>
+    <dimen name="buttonBarPaddingBottom">18dp</dimen>
+</resources>

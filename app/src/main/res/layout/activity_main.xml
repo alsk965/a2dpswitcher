@@ -1,0 +1,104 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="280dp"
+    android:orientation="vertical"
+    android:gravity="center_horizontal">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/bluetooth_disabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="@dimen/dialogPadding">
+
+            <TextView
+                android:id="@+id/enable_bluetooth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="300dp"
+                android:text="@string/enable_bluetooth"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <Button
+                android:id="@+id/enable"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_marginTop="16dp"
+                android:textColor="?attr/colorAccent"
+                android:textAllCaps="true"
+                android:text="@string/enable"
+                style="?android:attr/buttonBarButtonStyle" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/empty_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/dialogPadding"
+            android:layout_gravity="center"
+            android:text="@string/not_paired"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:visibility="gone" />
+
+        <ListView
+            android:id="@+id/list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:clipToPadding="false"
+            android:visibility="gone" />
+
+        <View
+            android:id="@+id/list_border_bottom"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="bottom"
+            android:alpha="0" />
+
+        <View
+            android:id="@+id/list_border_top"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="top"
+            android:alpha="0" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:minHeight="48dp"
+        android:paddingLeft="@dimen/buttonBarPadding"
+        android:paddingRight="@dimen/buttonBarPadding"
+        android:paddingBottom="@dimen/buttonBarPaddingBottom"
+        android:orientation="horizontal" >
+
+        <CheckBox
+            android:id="@+id/show_notification"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="6dp"
+            android:layout_weight="1"
+            android:text="@string/show_notification" />
+
+        <ImageView
+            android:id="@+id/menu"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:background="?android:attr/actionBarItemBackground"
+            android:contentDescription="@string/menu"
+            android:scaleType="center"
+            android:src="@drawable/ic_menu_moreoverflow" />
+    </LinearLayout>
+
+</LinearLayout>
