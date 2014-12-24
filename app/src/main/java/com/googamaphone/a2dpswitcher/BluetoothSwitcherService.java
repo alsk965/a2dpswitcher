@@ -50,7 +50,6 @@ public class BluetoothSwitcherService extends Service {
     private final TreeSet<Integer> mHiddenDevices = new TreeSet<Integer>();
     private final LinkedList<Runnable> mPendingActions = new LinkedList<Runnable>();
 
-    private NotificationCompat.Builder mNotificationBuilder;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothA2dpCompat mAudioProxy;
 
@@ -138,14 +137,6 @@ public class BluetoothSwitcherService extends Service {
     }
 
     private void createNotification() {
-        final Intent intent = new Intent(this, MainActivity.class);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
-
-        mNotificationBuilder = new NotificationCompat.Builder(this)
-                .setTicker(getString(R.string.notification_ticker))
-                .setContentIntent(pendingIntent)
-                .setOngoing(true)
-                .setWhen(0);
     }
 
     @SuppressWarnings("deprecation")
@@ -155,39 +146,55 @@ public class BluetoothSwitcherService extends Service {
             return;
         }
 
+        final Intent intent = new Intent(this, MainActivity.class);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+                .setTicker(getString(R.string.notification_ticker))
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .setWhen(0);
+        builder.setPriority(NotificationCompat.PRIORITY_LOW);
+        builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
         if (mBluetoothAdapter == null) {
             // This device does not support Bluetooth.
-            mNotificationBuilder.setContentTitle(getString(R.string.notify_missing_bluetooth));
-            mNotificationBuilder.setContentText(null);
-            mNotificationBuilder.setSmallIcon(R.drawable.ic_stat_switcher_error);
+            builder.setContentTitle(getString(R.string.notify_missing_bluetooth));
+            builder.setContentText(null);
+            builder.setSmallIcon(R.drawable.ic_stat_switcher_error);
         } else if (!mBluetoothAdapter.isEnabled()) {
             // Bluetooth is currently disabled.
-            mNotificationBuilder.setContentTitle(getString(R.string.notify_bluetooth_disabled));
-            mNotificationBuilder.setContentText(null);
-            mNotificationBuilder.setSmallIcon(R.drawable.ic_stat_switcher_error);
+            builder.setContentTitle(getString(R.string.notify_bluetooth_disabled));
+            builder.setContentText(null);
+            builder.setSmallIcon(R.drawable.ic_stat_switcher_error);
         } else if (mAudioProxy == null) {
             // Failed to connect to the audio service.
-            mNotificationBuilder.setContentTitle(getString(R.string.notify_missing_audio_service));
-            mNotificationBuilder.setContentText(null);
-            mNotificationBuilder.setSmallIcon(R.drawable.ic_stat_switcher_error);
+            builder.setContentTitle(getString(R.string.notify_missing_audio_service));
+            builder.setContentText(null);
+            builder.setSmallIcon(R.drawable.ic_stat_switcher_error);
         } else {
             final BluetoothDevice device = getConnectedDevice();
             if (device != null) {
-                mNotificationBuilder.setContentTitle(mBinder.getDeviceName(device));
-                mNotificationBuilder.setSmallIcon(R.drawable.ic_stat_switcher_connected);
+                builder.setContentTitle(mBinder.getDeviceName(device));
+                builder.setSmallIcon(R.drawable.ic_stat_switcher_connected);
 
-                final CharSequence label = getString(R.string.disconnect);
-                final Intent intent = new Intent(ACTION_DISCONNECT, null, this, this.getClass());
-                final PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
-                mNotificationBuilder.addAction(R.drawable.abc_ic_clear_mtrl_alpha, label, pendingIntent);
+                final CharSequence disconnectLabel = getString(R.string.disconnect);
+                final Intent disconnectIntent = new Intent(this, BluetoothSwitcherService.class);
+                disconnectIntent.setAction(ACTION_DISCONNECT);
+                disconnectIntent.putExtra(EXTRA_DEVICE, device);
+
+                final PendingIntent disconnectPendingIntent =
+                        PendingIntent.getService(this, 0, disconnectIntent, 0);
+                builder.addAction(R.drawable.abc_ic_clear_mtrl_alpha,
+                        disconnectLabel, disconnectPendingIntent);
             } else {
-                mNotificationBuilder.setContentTitle(getString(R.string.no_device));
-                mNotificationBuilder.setSmallIcon(R.drawable.ic_stat_switcher_disconnected);
+                builder.setContentTitle(getString(R.string.no_device));
+                builder.setSmallIcon(R.drawable.ic_stat_switcher_disconnected);
             }
-            mNotificationBuilder.setContentText(getString(R.string.touch_to_change));
+            builder.setContentText(getString(R.string.touch_to_change));
         }
 
-        startForeground(R.id.notify_switcher, mNotificationBuilder.getNotification());
+        startForeground(R.id.notify_switcher, builder.getNotification());
     }
 
     private BluetoothDevice getConnectedDevice() {
